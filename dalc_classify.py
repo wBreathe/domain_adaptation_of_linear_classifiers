@@ -16,7 +16,7 @@ from kernel import *
 import sys
 import pickle
 import argparse 
-
+import os
 common.print_header('CLASSIFICATION')
 
 # Arguments parser   
@@ -44,6 +44,7 @@ print('File "' + args.model_file + '" loaded.')
 
 ###############################################################################
 print('\n... Loading dataset file ...')
+print("Loading ", args.test_file, " ...")
 ###############################################################################
 try:
     if args.format == 'matrix':
@@ -60,9 +61,10 @@ print(str(test_data.get_nb_examples()) + ' test examples loaded.')
 print('\n... Prediction ...')
 ###############################################################################
 predictions = classifier.predict(test_data.X)
-
+accuracy = classifier.calc_accuracy(Y=test_data.Y, predictions=predictions)
+print("Accuracy: ", accuracy)
 try:
-    predictions.tofile(args.prediction_file, '\n')
+    predictions.tofile(os.path.join("/home/wang/Data/android", args.prediction_file), '\n')
     print('File "' + args.prediction_file + '" created.')
 except:
     print('ERROR: Unable to write prediction file "' + args.prediction_file + '".')

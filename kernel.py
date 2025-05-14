@@ -147,3 +147,14 @@ class KernelClassifier:
     def write_to_file(self, filename):
         """Write the weight vector into a file."""
         self.alpha_vector.tofile(filename, '\n')
+
+    def calc_accuracy(self, Y, X=None, kernel_matrix=None, predictions=None):
+        """Compute the classification accuracy on a dataset."""
+        if predictions is None:
+            predictions = self.predict(X, kernel_matrix)
+    
+        predicted_labels = np.sign(predictions)
+    
+
+        accuracy = np.mean(predicted_labels == Y)
+        return accuracy
