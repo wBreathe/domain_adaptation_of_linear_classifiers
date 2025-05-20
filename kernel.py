@@ -10,7 +10,15 @@ Kernel class and KernelClassifier class
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.sparse import issparse
-from dalc import gaussian_joint_error, gaussian_disagreement
+from scipy.special import erf
+from math import sqrt, pi
+
+CTE_1_SQRT_2    = 1.0 / sqrt(2.0)
+def gaussian_disagreement(x): 
+    return 0.5 * ( 1.0 - (erf(x * CTE_1_SQRT_2))**2 )
+def gaussian_joint_error(x):
+    return 0.25 * ( 1.0 - erf(x * CTE_1_SQRT_2) )**2
+
 
 # kernel functions
 def linear_kernel(point_1, point_2):
