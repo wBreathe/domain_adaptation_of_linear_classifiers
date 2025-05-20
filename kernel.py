@@ -181,6 +181,7 @@ class KernelClassifier:
 
         disagreement_vector = gaussian_disagreement(margin_vector) * target_mask
         loss_target = disagreement_vector.sum()
-
-        print("source loss: ", loss_source)
-        print("target loss: ", loss_target)
+        nb_examples_source = int(np.sum(source_mask))
+        nb_examples_target = int(np.sum(target_mask))
+        print("source loss: ", loss_source/nb_examples_source)
+        print("target loss: ", loss_target/nb_examples_target)
