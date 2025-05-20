@@ -140,7 +140,7 @@ class Dalc:
         """Perform a optimization round."""  
         if self.verbose: print('Performing optimization #' + str(i+1) + '.')
         
-        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient, dsp=True) 
+        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient) 
         cost = optimizer_output[1] 
         
         if self.verbose:
