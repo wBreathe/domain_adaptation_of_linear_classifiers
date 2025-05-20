@@ -154,7 +154,5 @@ class KernelClassifier:
             predictions = self.predict(X, kernel_matrix)
     
         predicted_labels = np.sign(predictions)
-    
-
         accuracy = np.mean(predicted_labels == Y)
         return accuracy

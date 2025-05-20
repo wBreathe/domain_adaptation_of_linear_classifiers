@@ -21,7 +21,9 @@ CTE_1_SQRT_2PI  = 1.0 / sqrt(2 * pi)
 CTE_SQRT_2_PI   = sqrt(2.0 / pi)
 
 # Some useful functions, and their derivatives
-def gaussian_loss(x):
+# 此处的x是y⋅w⊤x, erf(x/\sqrt(2)) = 2Φ(x)−1, Φ(x)-CDF 
+# 所以定义它干嘛
+def gaussian_loss(x): # 1- Φ(x)
     return 0.5 * ( 1.0 - erf(x * CTE_1_SQRT_2) )
 
 def gaussian_loss_derivative(x):
@@ -34,12 +36,16 @@ def gaussian_convex_loss_derivative(x):
     x = maximum(x, 0.0)
     return -CTE_1_SQRT_2PI * exp(-0.5 * x**2)
 
-def gaussian_disagreement(x):
+# 1-p^2-(1-p)^2 = 1-p^2-1-p^2+2p = 2p(1-p)
+# erf = 2p-1 -> p = 0.5(erf+1)
+# disagreement =-1* 0.5(erf+1)(erf-1)=-1*0.5(erf^2-1) = 0.5*(1-erf^2)
+def gaussian_disagreement(x): 
     return 0.5 * ( 1.0 - (erf(x * CTE_1_SQRT_2))**2 )
 
 def gaussian_disagreement_derivative(x):
     return -CTE_SQRT_2_PI * erf(x * CTE_1_SQRT_2) * exp(-0.5 * x**2)
 
+# 两个分类器都出错：JointError(x)=(1−Φ(x))^2
 def gaussian_joint_error(x):
     return 0.25 * ( 1.0 - erf(x * CTE_1_SQRT_2) )**2
 
@@ -134,7 +140,7 @@ class Dalc:
         """Perform a optimization round."""  
         if self.verbose: print('Performing optimization #' + str(i+1) + '.')
         
-        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient) 
+        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient, dsp=True) 
         cost = optimizer_output[1] 
         
         if self.verbose:
