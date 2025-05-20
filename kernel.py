@@ -10,7 +10,7 @@ Kernel class and KernelClassifier class
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.sparse import issparse
-
+from dalc import gaussian_joint_error, gaussian_disagreement
 
 # kernel functions
 def linear_kernel(point_1, point_2):
@@ -156,3 +156,23 @@ class KernelClassifier:
         predicted_labels = np.sign(predictions)
         accuracy = np.mean(predicted_labels == Y)
         return accuracy
+    
+    def calc_cost(self, source_data, target_data):
+        """Compute the cost function value at alpha_vector."""
+        data_matrix = np.vstack((source_data.X, target_data.X))
+        kernel_matrix = self.create_matrix(data_matrix)
+        kernel_matrix_dot_alpha_vector = np.dot(kernel_matrix, self.alpha_vector)
+        label_vector = np.hstack((source_data.Y, np.zeros(target_data.get_nb_examples())))
+        label_vector = np.array(label_vector, dtype=int)
+        target_mask = np.array(label_vector == 0, dtype=int)
+        source_mask = np.array(label_vector != 0, dtype=int)
+        margin_factor = (label_vector + target_mask) / np.sqrt( np.diag(kernel_matrix) )
+        margin_vector = kernel_matrix_dot_alpha_vector * margin_factor
+        joint_err_vector = gaussian_joint_error(margin_vector) * source_mask
+        loss_source = joint_err_vector.sum()
+
+        disagreement_vector = gaussian_disagreement(margin_vector) * target_mask
+        loss_target = disagreement_vector.sum()
+
+        print("source loss: ", loss_source)
+        print("target loss: ", loss_target)
