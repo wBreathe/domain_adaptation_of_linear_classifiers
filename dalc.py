@@ -157,7 +157,7 @@ class Dalc:
         else:
             self.calc_cost = self.calc_cost_dalc
             self.calc_gradient = self.calc_gradient_dalc
-        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient, dsp=True) 
+        optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient) 
         cost = optimizer_output[1] 
         
         if self.verbose:
