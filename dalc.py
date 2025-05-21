@@ -65,7 +65,7 @@ def gaussian_joint_error_convex_derivative(x):
 
 # Main learning algorithm
 class Dalc:
-    def __init__(self, B=1.0, C=1.0, convexify=False, nb_restarts=1, verbose=False):
+    def __init__(self, B=1.0, C=1.0, convexify=False, nb_restarts=1, verbose=False, nodalc=False):
         """Pbda learning algorithm.
         B: Trade-off parameter 'B' (source joint error modifier)
         C: Trade-off parameter 'C' (target disagreement modifier)
@@ -85,6 +85,7 @@ class Dalc:
         else:
             self.source_loss_fct = gaussian_joint_error
             self.source_loss_derivative_fct = gaussian_joint_error_derivative
+        self.nodalc = nodalc
 
     def learn(self, source_data, target_data, kernel=None, return_kernel_matrix=False):
         """Launch learning process."""
@@ -94,9 +95,17 @@ class Dalc:
             kernel = Kernel(kernel_str=kernel)
 
         if self.verbose: print('Building kernel matrix.')
-        data_matrix = np.vstack((source_data.X, target_data.X))
-        label_vector = np.hstack((source_data.Y, np.zeros(target_data.get_nb_examples())))
-        
+        data_matrix_dalc = np.vstack((source_data.X, target_data.X))
+        label_vector_dalc = np.hstack((source_data.Y, np.zeros(target_data.get_nb_examples())))
+        data_matrix_nodalc = np.vstack((source_data.X))
+        label_vector_nodalc = np.hstack((source_data.Y))
+        if(self.nodalc):
+            data_matrix = data_matrix_nodalc
+            label_vector = label_vector_nodalc
+        else:
+            data_matrix = data_matrix_dalc
+            label_vector = label_vector_dalc
+
         kernel_matrix = kernel.create_matrix(data_matrix)
         
         alpha_vector = self.learn_on_kernel_matrix(kernel_matrix, label_vector)
@@ -119,7 +128,10 @@ class Dalc:
         if np.shape(kernel_matrix) != (self.nb_examples, self.nb_examples):
             raise Exception("kernel_matrix and label_vector size differ.")
         
-        self.margin_factor = (self.label_vector + self.target_mask) / np.sqrt( np.diag(self.kernel_matrix) )
+        if(self.nodalc):
+            self.margin_factor = (self.label_vector)/np.sqrt(np.diag(self.kernel_matrix))
+        else:
+            self.margin_factor = (self.label_vector + self.target_mask) / np.sqrt( np.diag(self.kernel_matrix) )
         
         initial_vector = self.label_vector / float(self.nb_examples)        
         best_cost, best_output = self.perform_one_optimization(initial_vector, 0)
@@ -139,7 +151,12 @@ class Dalc:
     def perform_one_optimization(self, initial_vector, i):
         """Perform a optimization round."""  
         if self.verbose: print('Performing optimization #' + str(i+1) + '.')
-        
+        if self.nodalc:
+            self.calc_cost = self.calc_cost_nodalc
+            self.calc_gradient = self.calc_gradient_nodalc
+        else:
+            self.calc_cost = self.calc_cost_dalc
+            self.calc_gradient = self.calc_gradient_dalc
         optimizer_output = optimize.fmin_l_bfgs_b(self.calc_cost, initial_vector, self.calc_gradient, dsp=True) 
         cost = optimizer_output[1] 
         
@@ -150,7 +167,7 @@ class Dalc:
     
         return cost, optimizer_output
                            
-    def calc_cost(self, alpha_vector, full_output=False):
+    def calc_cost_dalc(self, alpha_vector, full_output=False):
         """Compute the cost function value at alpha_vector."""
         kernel_matrix_dot_alpha_vector = np.dot(self.kernel_matrix, alpha_vector)
         margin_vector = kernel_matrix_dot_alpha_vector * self.margin_factor
@@ -170,7 +187,7 @@ class Dalc:
         else:
             return cost
         
-    def calc_gradient(self, alpha_vector):
+    def calc_gradient_dalc(self, alpha_vector):
         """Compute the cost function gradient at alpha_vector."""
         kernel_matrix_dot_alpha_vector = np.dot( self.kernel_matrix, alpha_vector )
         margin_vector = kernel_matrix_dot_alpha_vector * self.margin_factor
@@ -185,22 +202,70 @@ class Dalc:
 
         return d_loss_source_vector / self.C + d_loss_target_vector / self.B + d_KL_vector / (self.B * self.C)
         
+    
+    def calc_cost_nodalc(self, alpha_vector, full_output=False):
+        """Compute the cost function value at alpha_vector."""
+        kernel_matrix_dot_alpha_vector = np.dot(self.kernel_matrix, alpha_vector)
+        margin_vector = kernel_matrix_dot_alpha_vector * self.margin_factor
+        
+        loss_vec = np.maximum(0, 1 - margin_vector) ** 2
+        assert margin_vector.shape[0] == np.sum(self.source_mask), \
+        f"margin_vector shape {margin_vector.shape} doesn't match number of source samples {np.sum(self.source_mask)}"
+
+        loss_source = np.sum(loss_vec * self.source_mask)
+
+        KL  = 0.5 * np.dot(kernel_matrix_dot_alpha_vector, alpha_vector)
+               
+        cost = loss_source / self.C + KL
+
+        if full_output:
+            return cost, loss_source, KL
+        else:
+            return cost
+        
+    def calc_gradient_nodalc(self, alpha_vector):
+        """Compute the cost function gradient at alpha_vector."""
+        kernel_matrix_dot_alpha_vector = np.dot( self.kernel_matrix, alpha_vector )
+        margin_vector = kernel_matrix_dot_alpha_vector * self.margin_factor
+
+        diff = np.where(margin_vector < 1, -2 * (1 - margin_vector), 0)
+        grad_margin = diff * self.margin_factor
+        grad_loss = np.dot(self.kernel_matrix, grad_margin)
+                          
+        d_KL_vector = kernel_matrix_dot_alpha_vector
+        
+        grad = grad_loss / self.C + d_KL_vector
+
+        return grad
+    
+    
+    
+    
     def get_stats(self, alpha_vector=None):
         """Compute some statistics."""
         if alpha_vector is None: alpha_vector = self.alpha_vector
-        cost, loss_source, loss_target, KL = self.calc_cost(alpha_vector, full_output=True)
-        nb_examples_source = int(np.sum(self.source_mask))
+        if(self.nodalc):
+            cost, loss_source, KL = self.calc_cost(alpha_vector, full_output=True)
+            nb_examples_source = int(np.sum(self.source_mask))
+            stats = OrderedDict()
+            stats['cost value'] = cost
+            stats['loss source'] = loss_source / nb_examples_source
+            stats['source loss fct'] = self.source_loss_fct.__name__
+            stats['optimizer warnflag'] = self.optimizer_output[2]['warnflag']
+            stats['KL'] = KL
 
-        stats = OrderedDict()
-
-        stats['B'] = self.B
-        stats['C'] = self.C
-        stats['cost value'] = cost
-        stats['loss source'] = loss_source / nb_examples_source
-        stats['loss target'] = loss_target / self.nb_examples
-        stats['source loss fct'] = self.source_loss_fct.__name__
-        stats['KL'] = KL
-        stats['optimizer warnflag'] = self.optimizer_output[2]['warnflag']
+        else:
+            cost, loss_source, loss_target, KL = self.calc_cost(alpha_vector, full_output=True)
+            nb_examples_source = int(np.sum(self.source_mask))
+            stats = OrderedDict()
+            stats['B'] = self.B
+            stats['C'] = self.C
+            stats['cost value'] = cost
+            stats['loss source'] = loss_source / nb_examples_source
+            stats['loss target'] = loss_target / self.nb_examples
+            stats['source loss fct'] = self.source_loss_fct.__name__
+            stats['KL'] = KL
+            stats['optimizer warnflag'] = self.optimizer_output[2]['warnflag']
 
         return stats
 
