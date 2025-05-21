@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description="", formatter_class=common.custom_f
 parser.add_argument("--format", "-f", dest="format",  choices=['matrix', 'svmlight'], default='matrix', help='Datasets format. Default: matrix (each line defines an example, the first column defines the label in {-1, 1}, and the next columns represent the real-valued features)')
 parser.add_argument("--model",  "-m", dest="model_file", default='model.bin', help="Model file name. Default: model.bin")
 parser.add_argument("--pred",   "-p", dest="prediction_file", default='predictions.out', help="Save predictions into files. Default: predictions.out")
-parser.add_argument("--nodalc", "-n", dest="no_dalc", default=False, help="Weight vector file name. Default: (none)")
+parser.add_argument('--nodalc', action='store_true')
 parser.add_argument("source_file", help="Defines the file containing the dataset to train.")
 parser.add_argument("test_file", help="Defines the file containing the dataset to classify.")
 args = parser.parse_args()

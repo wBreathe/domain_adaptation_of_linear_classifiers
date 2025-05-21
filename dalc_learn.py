@@ -31,7 +31,7 @@ parser.add_argument("--nb_restarts", "-n", dest="nb_restarts",  type=int, defaul
 parser.add_argument("--format", "-f", dest="format",  choices=['matrix', 'svmlight'], default='matrix', help='Datasets format. Default: matrix (each line defines an example, the first column defines the label in {-1, 1}, and the next columns represent the real-valued features)')
 parser.add_argument("--model",  "-m", dest="model_file", default='model.bin', help="Model file name. Default: model.bin")
 parser.add_argument("--weight", "-w", dest="weight_file", default='', help="Weight vector file name. Default: (none)")
-parser.add_argument("--nodalc", "-n", dest="no_dalc", default=False, help="Weight vector file name. Default: (none)")
+parser.add_argument('--nodalc', action='store_true')
 parser.add_argument("source_file", help="Defines the file containing the source dataset.")
 parser.add_argument("target_file", help="Defines the file containing the target dataset.")
 args = parser.parse_args()
