@@ -71,7 +71,7 @@ if args.kernel == 'rbf':
 elif args.kernel == 'linear':
     kernel = Kernel('linear')
     
-algo = Dalc(C=args.C_value, B=args.B_value, verbose=True, nb_restarts=args.nb_restarts, no_dalc=args.no_dalc)
+algo = Dalc(C=args.C_value, B=args.B_value, verbose=True, nb_restarts=args.nb_restarts, nodalc=args.no_dalc)
 classifier = algo.learn(source_data, target_data, kernel) 
 
 ###############################################################################
