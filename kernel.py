@@ -169,13 +169,16 @@ class KernelClassifier:
         """Compute the cost function value at alpha_vector."""
         data_matrix = np.vstack((source_data.X, target_data.X))
         kernel_matrix = self.create_matrix(data_matrix)
-        kernel_matrix_dot_alpha_vector = np.dot(kernel_matrix, self.alpha_vector)
+        kernel_matrix_dot_alpha_vector = np.dot(kernel_matrix.T, self.alpha_vector)
         label_vector = np.hstack((source_data.Y, np.zeros(target_data.get_nb_examples())))
         label_vector = np.array(label_vector, dtype=int)
         target_mask = np.array(label_vector == 0, dtype=int)
         source_mask = np.array(label_vector != 0, dtype=int)
-        margin_factor = (label_vector + target_mask) / np.sqrt( np.diag(kernel_matrix) )
-        margin_vector = kernel_matrix_dot_alpha_vector * margin_factor
+        epsilon = 1e-8
+        diag = np.array([self.kernel.kernel_func(xi, xi) for xi in data_matrix])  # shape: (n_s + n_t,)
+
+        margin_factor = (label_vector + target_mask) / np.sqrt(diag + epsilon)
+        margin_vector = kernel_matrix_dot_alpha_vector.T * margin_factor
         joint_err_vector = gaussian_joint_error(margin_vector) * source_mask
         loss_source = joint_err_vector.sum()
 
