@@ -4,16 +4,16 @@ SOURCE_YEAR=$1
 DATA_DIR="/home/wang/Data/android"
 LOG_DIR="/home/wang/Data/dalc_log"
 
-for TARGET_YEAR in {2012..2015}
+for TARGET_YEAR in {2012..2022}
 do
     if [ "$TARGET_YEAR" -eq "$SOURCE_YEAR" ]; then
         continue
     fi
 
-    MODEL_PATH="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}-nodalc.bin"
+    MODEL_PATH="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}-nodalc_new.bin"
     SOURCE_FILE="$DATA_DIR/${SOURCE_YEAR}.txt"
-    TARGET_FILE="$DATA_DIR/${TARGET_YEAR}.txt"
-    PRED_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}-nodalc.pred"
+    TARGET_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}.txt"
+    PRED_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}-nodalc_new.pred"
 
     nohup python dalc_learn.py \
         --model="$MODEL_PATH" \
