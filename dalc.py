@@ -65,7 +65,7 @@ def gaussian_joint_error_convex_derivative(x):
 
 # Main learning algorithm
 class Dalc:
-    def __init__(self, B=1.0, C=1.0, convexify=False, nb_restarts=1, verbose=False, nodalc=False):
+    def __init__(self, B=1.0, C=1.0, convexify=False, nb_restarts=1, verbose=False, nodalc=False, post=False, alpha=None):
         """Pbda learning algorithm.
         B: Trade-off parameter 'B' (source joint error modifier)
         C: Trade-off parameter 'C' (target disagreement modifier)
@@ -86,6 +86,11 @@ class Dalc:
             self.source_loss_fct = gaussian_joint_error
             self.source_loss_derivative_fct = gaussian_joint_error_derivative
         self.nodalc = nodalc
+        self.post = post
+        if(self.post):
+            assert(alpha is not None)
+            self.alpha = alpha
+
 
     def learn(self, source_data, target_data, kernel=None, return_kernel_matrix=False):
         """Launch learning process."""
@@ -133,7 +138,9 @@ class Dalc:
         else:
             self.margin_factor = (self.label_vector + self.target_mask) / np.sqrt( np.diag(self.kernel_matrix) )
         
-        initial_vector = self.label_vector / float(self.nb_examples)        
+        initial_vector = self.label_vector / float(self.nb_examples)
+        if(self.post):
+            initial_vector[:len(self.alpha)] = self.alpha
         best_cost, best_output = self.perform_one_optimization(initial_vector, 0)
         
         for i in range(1, self.nb_restarts):

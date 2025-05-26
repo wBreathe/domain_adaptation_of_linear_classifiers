@@ -32,6 +32,7 @@ parser.add_argument("--format", "-f", dest="format",  choices=['matrix', 'svmlig
 parser.add_argument("--model",  "-m", dest="model_file", default='model.bin', help="Model file name. Default: model.bin")
 parser.add_argument("--weight", "-w", dest="weight_file", default='', help="Weight vector file name. Default: (none)")
 parser.add_argument('--nodalc', dest="no_dalc", action='store_true')
+parser.add_argument('--postOptimize', dest="post", action='store_true')
 parser.add_argument("source_file", help="Defines the file containing the source dataset.")
 parser.add_argument("target_file", help="Defines the file containing the target dataset.")
 args = parser.parse_args()
@@ -71,7 +72,7 @@ if args.kernel == 'rbf':
 elif args.kernel == 'linear':
     kernel = Kernel('linear')
     
-algo = Dalc(C=args.C_value, B=args.B_value, verbose=True, nb_restarts=args.nb_restarts, nodalc=args.no_dalc)
+algo = Dalc(C=args.C_value, B=args.B_value, verbose=True, nb_restarts=args.nb_restarts, nodalc=args.no_dalc, post=args.post)
 classifier = algo.learn(source_data, target_data, kernel) 
 
 ###############################################################################
