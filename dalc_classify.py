@@ -98,3 +98,12 @@ if(args.post):
     
     print('Test risk = ' + str(risk))
 
+    ###############################################################################
+    print('\n... Saving model: "' + f"{args.model_file}-post" + '" ...')
+    ###############################################################################
+    try:
+        with open(f"{args.model_file}-post", 'wb') as model:
+            pickle.dump(classifier, model, pickle.HIGHEST_PROTOCOL)
+        print('File "' + f"{args.model_file}-post" + '" created.')
+    except:
+        print('ERROR: Unable to write model file "' + f"{args.model_file}-post" + '".')
