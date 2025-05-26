@@ -10,10 +10,10 @@ do
         continue
     fi
 
-    MODEL_PATH="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}.bin"
+    MODEL_PATH="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}_new.bin"
     SOURCE_FILE="$DATA_DIR/${SOURCE_YEAR}.txt"
-    TARGET_FILE="$DATA_DIR/${TARGET_YEAR}.txt"
-    PRED_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}.pred"
+    TARGET_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}.txt"
+    PRED_FILE="$DATA_DIR/${SOURCE_YEAR}-${TARGET_YEAR}_new.pred"
 
     nohup python dalc_learn.py \
         --model="$MODEL_PATH" \
